@@ -70,11 +70,18 @@ function apply(ctx) {
 					if (!agent) return
 					const goal = ctx.goals.get(agent)
 					if (!goal || goal.phase !== 'active') return
-					const fp = fingerprint(agent.session.meta.cwd)
+					// 工作区路径在 session.header.cwd（session 创建元数据），非 meta
+					const fp = fingerprint(agent.session.header.cwd)
 					const t = trackerFor(agent)
 					const res = t.onRoundEnd(goal, fp)
-					if (res.warning) warnings.set(session.id, { noChange: res.noChange, at: Date.now() })
-					else warnings.delete(session.id)
+					if (res.warning) {
+						warnings.set(session.id, { noChange: res.noChange, at: Date.now() })
+						if (ctx.logger && typeof ctx.logger.warn === 'function') {
+							ctx.logger.warn(`loop-guard: idle warning for agent "${session.id}": ${res.noChange} rounds without workspace fingerprint change`)
+						}
+					} else {
+						warnings.delete(session.id)
+					}
 				} catch (e) {
 					// 静默降级：单次采样失败不影响后续
 					if (ctx.logger && typeof ctx.logger.warn === 'function') {
@@ -154,6 +161,9 @@ function apply(ctx) {
 				}
 			}
 		}, 'loop-guard: idle detection')
+		if (ctx.logger && typeof ctx.logger.info === 'function') {
+			ctx.logger.info(`loop-guard: idle detection armed (threshold=${IDLE_THRESHOLD} rounds, workspace fingerprint per turn/end)`)
+		}
 	} catch (e) {
 		if (ctx.logger && typeof ctx.logger.warn === 'function') {
 			ctx.logger.warn('loop-guard: apply failed: ' + (e && e.message ? e.message : String(e)))
