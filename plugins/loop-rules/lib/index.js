@@ -83,6 +83,21 @@ const DRIFT_TEXT = [
 	'4. **诱饵警惕**：执行中发现的"有趣但无关"的子问题不展开深挖；只记录为"下一步候选"（若确属 objective 必需，须说明关联）'
 ].join('\n')
 
+/** P2 完成审批门 + 成功模板沉淀规则（0.1.5 新增）。 */
+const P2_TEXT = [
+	'## 完成审批门与成功模板沉淀（loop-rules 0.1.5，适用 goal 循环）',
+	'',
+	'### 1. 完成审批门',
+	'- 调用 complete 前：先向用户呈现**完成证据摘要**（目标/产出/验证结果/产物路径），等待用户确认',
+	'- 用户明确确认（或事先已授权自动完成）后才可 complete；未确认前不得 complete，报告"等待用户确认"',
+	'- 自动续跑中用户不在线：以带证据的 complete 报告代替人工确认（P0 证据规则兜底），并在报告中注明"未经人工确认"',
+	'',
+	'### 2. 成功模板沉淀（06 层正反馈）',
+	'- 连续完成 3 个目标后：回顾已完成的 objective，提炼可复用的**目标结构模板**（按类型：验证类/实现类/迁移类等的成功标准写法）',
+	'- 沉淀：追加到 `<工作区>/memory/009-loop-roadmap.md` 的「成功目标模板」节（或工作区 `.goal-templates.md`），内容 = 模板结构 + 2-3 个成功实例',
+	'- 崩溃安全：沉淀写失败不影响完成报告'
+].join('\n')
+
 function apply(ctx) {
 	try {
 		ctx.effect(() => ctx.systemPrompt.section({
@@ -110,6 +125,11 @@ function apply(ctx) {
 			order: 209,
 			text: DRIFT_TEXT
 		}), 'loop-rules: ralph drift detection section')
+		ctx.effect(() => ctx.systemPrompt.section({
+			name: 'plugin:loop-rules:p2',
+			order: 210,
+			text: P2_TEXT
+		}), 'loop-rules: approval gate and template section')
 	} catch (e) {
 		// 静默降级：规则注入失败不影响任何功能
 		if (ctx.logger && typeof ctx.logger.warn === 'function') {
