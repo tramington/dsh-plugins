@@ -73,6 +73,16 @@ const ROLLBACK_TEXT = [
 	'5. **崩溃安全**：历史文件读不到时禁止凭记忆改写回滚（R1.9），宁可不回滚并报告'
 ].join('\n')
 
+/** 目标漂移检测规则（0.1.4 新增）：每轮重申目标 + 轮末对照检查（成本极低）。 */
+const DRIFT_TEXT = [
+	'## 目标漂移检测（loop-rules 0.1.4，适用 ralph 循环）',
+	'',
+	'1. **轮首重申**：每轮开始时，先用一句话重申本轮 objective 的核心要求（对照轮次消息中的 objective 原文，禁止改写），并声明本轮工作范围',
+	'2. **轮末对照**：报告完成/阻塞前，对照 objective 逐条检查本轮产出是否对齐；未对齐项必须显式列出（该做什么 vs 实际做了什么）',
+	'3. **发现漂移**：立即停止跑偏方向，回到 objective 主线；将偏离点记录在 ROUND 文件的"阻塞"或"已完成"中（如实说明偏差）',
+	'4. **诱饵警惕**：执行中发现的"有趣但无关"的子问题不展开深挖；只记录为"下一步候选"（若确属 objective 必需，须说明关联）'
+].join('\n')
+
 function apply(ctx) {
 	try {
 		ctx.effect(() => ctx.systemPrompt.section({
@@ -95,6 +105,11 @@ function apply(ctx) {
 			order: 208,
 			text: ROLLBACK_TEXT
 		}), 'loop-rules: goal rollback section')
+		ctx.effect(() => ctx.systemPrompt.section({
+			name: 'plugin:loop-rules:drift',
+			order: 209,
+			text: DRIFT_TEXT
+		}), 'loop-rules: ralph drift detection section')
 	} catch (e) {
 		// 静默降级：规则注入失败不影响任何功能
 		if (ctx.logger && typeof ctx.logger.warn === 'function') {
