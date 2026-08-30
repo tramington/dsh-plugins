@@ -13,7 +13,7 @@
  * 崩溃安全：无 goal 或投影缺失时组件不渲染（返回 null），不影响任何功能；
  * 卸载本插件即完全恢复。
  */
-window.__ModuleLoader__.load({
+if (typeof window !== "undefined" && window.__ModuleLoader__) window.__ModuleLoader__.load({
 	id: "@dsh-local/loop-cost",
 	factory: (require) => {
 		var module = { exports: {} };
