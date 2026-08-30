@@ -46,6 +46,22 @@ const BASELINE_TEXT = [
 	'6. **遍历规则（R0.4）**：需求明确后、出方案前，主动遍历 CODING-RULES（dsh-memory 仓库完整版）把适用规则融入方案'
 ].join('\n')
 
+/** ralph 结构化 handoff 规则（0.1.2 新增）：每轮落盘 ROUND 文件，替代纯聊天报告。 */
+const HANDOFF_TEXT = [
+	'## ralph 结构化 handoff（loop-rules 0.1.2，适用 ralph 循环）',
+	'',
+	'1. **每轮落盘**：每轮结束时（报告完成/阻塞前），写 `.rounds/ROUND-<n>.md` 到工作区（n = `.rounds/` 目录已有文件数 + 1，从 1 开始）',
+	'2. **格式固定**（四段，缺一不可）：',
+	'   - `# ROUND <n>`',
+	'   - `## 目标`：objective 原文',
+	'   - `## 已完成（含证据）`：本轮完成事项 + 可检查证据（文件路径/数字/验证结果）',
+	'   - `## 阻塞`：具体条件（无则写"无"）',
+	'   - `## 下一步`：下轮待办清单',
+	'3. **跨轮恢复**：新一轮开始时，先读 `.rounds/` 目录中最新 ROUND 文件恢复上下文（工作区是唯一跨轮记忆）',
+	'4. **报告引用**：完成/阻塞报告必须引用 ROUND 文件路径作为证据（同 P0 完成证据规则）',
+	'5. **崩溃安全**：ROUND 写失败不阻塞主流程（try/catch），但要在报告中说明'
+].join('\n')
+
 function apply(ctx) {
 	try {
 		ctx.effect(() => ctx.systemPrompt.section({
@@ -58,6 +74,11 @@ function apply(ctx) {
 			order: 206,
 			text: BASELINE_TEXT
 		}), 'loop-rules: baseline coding rules section')
+		ctx.effect(() => ctx.systemPrompt.section({
+			name: 'plugin:loop-rules:handoff',
+			order: 207,
+			text: HANDOFF_TEXT
+		}), 'loop-rules: ralph handoff section')
 	} catch (e) {
 		// 静默降级：规则注入失败不影响任何功能
 		if (ctx.logger && typeof ctx.logger.warn === 'function') {
