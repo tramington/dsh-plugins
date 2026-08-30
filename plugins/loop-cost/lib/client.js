@@ -85,13 +85,15 @@ if (typeof window !== "undefined" && window.__ModuleLoader__) window.__ModuleLoa
 			var usage = useProjection("tokenUsage");
 			var cost = costOf(usage);
 			var tok = tokensOf(usage);
-			var g = goal && goal.phase ? goal : null;
+			// goal 投影 wire 形状（schema 实证）：{goal: {id, phase, maxGoalRounds, ...}, roundsStarted, ...} 或 null
+			var g = goal && goal.goal && goal.goal.phase ? goal.goal : null;
 			if (!g) return null; // 无 goal：不渲染（零占用）
+			var rounds = goal.roundsStarted || 0;
 
 			var phaseLabel = g.phase === "active" ? "进行中" : g.phase === "paused" ? "已暂停" : g.phase === "blocked" ? "已阻塞" : g.phase;
 			var tip =
 				"goal " + phaseLabel +
-				" · " + g.roundsStarted + "/" + g.maxGoalRounds + " 轮" +
+				" · " + rounds + "/" + g.maxGoalRounds + " 轮" +
 				"\n会话累计（token 估算）: " + formatCost(cost) +
 				" (" + (isPeak() ? "高峰 ×2" : "空闲 ×1") + ")" +
 				"\n输入未命中 " + tok.u + " · 缓存命中 " + tok.c + " · 输出 " + tok.o + " tokens" +
@@ -103,7 +105,7 @@ if (typeof window !== "undefined" && window.__ModuleLoader__) window.__ModuleLoa
 				children: [
 					_jsx("span", {
 						style: { fontSize: 12, fontWeight: 600, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" },
-						children: "⏱ " + g.roundsStarted + "/" + g.maxGoalRounds + " 轮"
+						children: "⏱ " + rounds + "/" + g.maxGoalRounds + " 轮"
 					}),
 					_jsx("span", {
 						style: { fontSize: 9, opacity: 0.6, whiteSpace: "nowrap" },
