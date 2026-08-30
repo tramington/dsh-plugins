@@ -1,0 +1,14 @@
+{
+  "name": "@dsh-local/loop-rules",
+  "version": "0.1.1",
+  "description": "P0+P1.1 loop 优化：目标可验证性/完成证据规则 + 通用编码防错底层规则（prompt 层注入，零崩溃风险，可卸载恢复）",
+  "private": true,
+  "type": "module",
+  "main": "lib/index.js",
+  "exports": {
+    ".": {
+      "default": "./lib/index.js"
+    },
+    "./package.json": "./package.json"
+  }
+}
