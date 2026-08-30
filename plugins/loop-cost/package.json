@@ -1,0 +1,14 @@
+{
+  "name": "@dsh-local/loop-cost",
+  "version": "0.1.0",
+  "description": "P2 成本视图（browser 半）：会话 header 显示 goal 轮次 + 会话累计花费（useProjection goal/tokenUsage，事件驱动零轮询，无 goal 不渲染）",
+  "private": true,
+  "type": "module",
+  "main": "lib/client.js",
+  "exports": {
+    ".": {
+      "default": "./lib/client.js"
+    },
+    "./package.json": "./package.json"
+  }
+}
