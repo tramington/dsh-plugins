@@ -86,11 +86,13 @@ if (typeof window !== "undefined" && window.__ModuleLoader__) window.__ModuleLoa
 			var cost = costOf(usage);
 			var tok = tokensOf(usage);
 			// goal 投影 wire 形状（schema 实证）：{goal: {id, phase, maxGoalRounds, ...}, roundsStarted, ...} 或 null
-			var g = goal && goal.goal && goal.goal.phase ? goal.goal : null;
-			if (!g) return null; // 无 goal：不渲染（零占用）
+			// ⚠️ complete/blocked 后投影仍保留 goal（仅 clear 才 null）——只渲染运行中（active/paused），
+			// 否则"⏱ 2/2 轮"会在 goal 结束后永久残留
+			var g = goal && goal.goal && (goal.goal.phase === "active" || goal.goal.phase === "paused") ? goal.goal : null;
+			if (!g) return null; // 无运行中 goal：不渲染（零占用）
 			var rounds = goal.roundsStarted || 0;
 
-			var phaseLabel = g.phase === "active" ? "进行中" : g.phase === "paused" ? "已暂停" : g.phase === "blocked" ? "已阻塞" : g.phase;
+			var phaseLabel = g.phase === "active" ? "进行中" : "已暂停";
 			var tip =
 				"goal " + phaseLabel +
 				" · " + rounds + "/" + g.maxGoalRounds + " 轮" +
