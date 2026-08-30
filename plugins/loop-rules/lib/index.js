@@ -62,6 +62,17 @@ const HANDOFF_TEXT = [
 	'5. **崩溃安全**：ROUND 写失败不阻塞主流程（try/catch），但要在报告中说明'
 ].join('\n')
 
+/** goal 回滚能力规则（0.1.3 新增）：恶化时从自动变更历史恢复旧 objective。 */
+const ROLLBACK_TEXT = [
+	'## goal 回滚能力（loop-rules 0.1.3，适用 goal 循环）',
+	'',
+	'1. **历史自动记录**：loop-guard 会在每次 goal 变更时自动追加 `<工作区>/.goal-history/<goalId>.md`（含 revision、操作、objective 全文），无需手动维护',
+	'2. **恶化信号**（任一即评估回滚）：①loop-guard 空转警告出现 ②产出明显偏离 objective ③用户指出目标漂移',
+	'3. **回滚动作**：调用 update_goal edit，把 objective 恢复为 `.goal-history/<goalId>.md` 中**上一 revision** 的原文（逐字复制，禁止改写）',
+	'4. **回滚报告**：说明"已回滚到 revision N-1 的 objective"，引用历史文件路径作为证据；若历史缺失，先从会话记录恢复原文，并在报告中说明',
+	'5. **崩溃安全**：历史文件读不到时禁止凭记忆改写回滚（R1.9），宁可不回滚并报告'
+].join('\n')
+
 function apply(ctx) {
 	try {
 		ctx.effect(() => ctx.systemPrompt.section({
@@ -79,6 +90,11 @@ function apply(ctx) {
 			order: 207,
 			text: HANDOFF_TEXT
 		}), 'loop-rules: ralph handoff section')
+		ctx.effect(() => ctx.systemPrompt.section({
+			name: 'plugin:loop-rules:rollback',
+			order: 208,
+			text: ROLLBACK_TEXT
+		}), 'loop-rules: goal rollback section')
 	} catch (e) {
 		// 静默降级：规则注入失败不影响任何功能
 		if (ctx.logger && typeof ctx.logger.warn === 'function') {
