@@ -98,6 +98,21 @@ const P2_TEXT = [
 	'- 崩溃安全：沉淀写失败不影响完成报告'
 ].join('\n')
 
+/** loop 教训沉淀规则（0.1.6 新增，P3）：错误→lessons learned→下轮应用。 */
+const LEARN_TEXT = [
+	'## loop 教训沉淀（loop-rules 0.1.6，适用 goal 与 ralph 循环）',
+	'',
+	'1. **错误自动记录**：loop-learn 会把工具失败（tool/result 带 error）自动追加到 `<工作区>/.lessons/errors/errors-<日期>.md`，无需手动维护',
+	'2. **每轮整理**：轮次结束时（报告前），查看 `.lessons/errors/` 中本轮新增的原始错误，整理为 **lessons learned** 追加到 `<工作区>/.lessons/learned.md`，格式固定三段式：',
+	'   - `## 教训 <n> · <日期>`',
+	'   - `现象：`（错误事实，如 "edit 报 requires reading first"）',
+	'   - `根因：`（为什么发生）',
+	'   - `规则：`（以后怎么做，可执行）',
+	'3. **重新注入**：loop-learn 会把最近教训注入运行时 context（每步可见）——执行前对照检查是否涉及已知坑；涉及则直接应用规则，不再重犯',
+	'4. **长期沉淀**：同一教训重复出现 2 次以上或用户认可后，合并进 CODING-RULES（dsh-memory 完整版），标注来源',
+	'5. **崩溃安全**：记录/整理失败不阻塞轮次（静默降级）'
+].join('\n')
+
 function apply(ctx) {
 	try {
 		ctx.effect(() => ctx.systemPrompt.section({
@@ -130,6 +145,11 @@ function apply(ctx) {
 			order: 210,
 			text: P2_TEXT
 		}), 'loop-rules: approval gate and template section')
+		ctx.effect(() => ctx.systemPrompt.section({
+			name: 'plugin:loop-rules:learn',
+			order: 211,
+			text: LEARN_TEXT
+		}), 'loop-rules: loop lesson section')
 	} catch (e) {
 		// 静默降级：规则注入失败不影响任何功能
 		if (ctx.logger && typeof ctx.logger.warn === 'function') {
