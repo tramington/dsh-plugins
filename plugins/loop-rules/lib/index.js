@@ -98,13 +98,13 @@ const P2_TEXT = [
 	'- 崩溃安全：沉淀写失败不影响完成报告'
 ].join('\n')
 
-/** loop 教训沉淀规则（0.1.6 新增，P3）：错误→lessons learned→下轮应用。 */
+/** loop 教训沉淀规则（0.1.7 更新：教训标题带精确时间，同天多条可区分）。 */
 const LEARN_TEXT = [
-	'## loop 教训沉淀（loop-rules 0.1.6，适用 goal 与 ralph 循环）',
+	'## loop 教训沉淀（loop-rules 0.1.7，适用 goal 与 ralph 循环）',
 	'',
 	'1. **错误自动记录**：loop-learn 会把工具失败（tool/result 带 error）自动追加到 `<工作区>/.lessons/errors/errors-<日期>.md`，无需手动维护',
 	'2. **每轮整理**：轮次结束时（报告前），查看 `.lessons/errors/` 中本轮新增的原始错误，整理为 **lessons learned** 追加到 `<工作区>/.lessons/learned.md`，格式固定三段式：',
-	'   - `## 教训 <n> · <日期>`',
+	'   - `## 教训 <n> · <YYYY-MM-DD HH:mm:ss>`（n = learned.md 已有教训条数 + 1；时间精确到秒，同一天多条可区分）',
 	'   - `现象：`（错误事实，如 "edit 报 requires reading first"）',
 	'   - `根因：`（为什么发生）',
 	'   - `规则：`（以后怎么做，可执行）',

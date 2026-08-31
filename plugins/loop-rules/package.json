@@ -1,7 +1,7 @@
 {
   "name": "@dsh-local/loop-rules",
-  "version": "0.1.6",
-  "description": "loop 规则包（prompt 层注入，零崩溃风险，可卸载恢复）：P0 证据 + 底层防错 + handoff + 回滚 + 漂移 + P2 审批门/模板 + P3 教训沉淀（错误→lessons→下轮应用）",
+  "version": "0.1.7",
+  "description": "loop 规则包（prompt 层注入，零崩溃风险，可卸载恢复）：P0 证据 + 底层防错 + handoff + 回滚 + 漂移 + P2 审批门/模板 + P3 教训沉淀（教训标题带精确时间）",
   "private": true,
   "type": "module",
   "main": "lib/index.js",
