@@ -19,7 +19,7 @@ import { join } from 'node:path'
 import { statSync } from 'node:fs'
 
 const name = '@dsh-local/loop-learn'
-const inject = ['systemPrompt']
+const inject = ['systemPrompt', 'agents']
 
 /** 工作区下的教训目录。 */
 const LESSONS_DIR = '.lessons'
@@ -54,7 +54,12 @@ function apply(ctx) {
 					const data = event.data
 					if (!data || !data.error) return
 					const agent = ctx.agents && ctx.agents.get(session.id)
-					if (!agent) return
+					if (!agent) {
+						if (ctx.logger && typeof ctx.logger.warn === 'function') {
+							ctx.logger.warn(`loop-learn: agent not found for session "${session.id}" (inject 'agents' missing?)`)
+						}
+						return
+					}
 					const cwd = agent.session.header.cwd
 					if (typeof cwd !== 'string' || cwd.length === 0) return
 					const entry = errorEntry(event)
