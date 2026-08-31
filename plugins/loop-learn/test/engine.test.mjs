@@ -47,8 +47,10 @@ console.log('2) appendError / listErrorFiles / readLatestLessons')
 		const files = listErrorFiles(errDir)
 		check('按天分文件（2 个）', files.length === 2)
 		check('文件名格式', files[0].startsWith('errors-') && files[0].endsWith('.md'))
-		// learned.md 读取
+		// learned.md 读取（带头部文件：头部块应被过滤）
 		writeFileSync(join(root, 'learned.md'), [
+			'# Lessons Learned',
+			'',
 			'## 教训 1 · 2026-08-30',
 			'现象：A',
 			'根因：B',
@@ -61,6 +63,7 @@ console.log('2) appendError / listErrorFiles / readLatestLessons')
 		].join('\n'))
 		const lessons = readLatestLessons(root, 1)
 		check('尾部 1 条', lessons.length === 1 && lessons[0].includes('教训 2'))
+		check('头部块被过滤', lessons.every(s => s.startsWith('## 教训 ')))
 		check('尾部 5 条（超上限取全部）', readLatestLessons(root, 5).length === 2)
 		check('文件缺失 → []', readLatestLessons(join(root, 'nope'), 5).length === 0)
 		check('坏目录 append → false 不抛', appendError(null, '- x') === false)

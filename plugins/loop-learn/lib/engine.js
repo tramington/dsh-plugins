@@ -61,8 +61,8 @@ export function readLatestLessons(dir, limit = 5) {
 		const file = join(dir, 'learned.md')
 		if (statSync(file).isFile() !== true) return []
 		const text = readFileSync(file, 'utf8')
-		// 按 "## 教训" 切块，取尾部 limit 条
-		const parts = text.split(/(?=^## 教训 )/m).map(s => s.trim()).filter(Boolean)
+		// 按 "## 教训" 切块；过滤头部/空块（不以 "## 教训" 开头），取尾部 limit 条
+		const parts = text.split(/(?=^## 教训 )/m).map(s => s.trim()).filter(s => s.startsWith('## 教训 '))
 		return parts.slice(-limit)
 	} catch {
 		return []

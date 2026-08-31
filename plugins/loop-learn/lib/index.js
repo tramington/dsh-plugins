@@ -39,7 +39,7 @@ function renderLessons(lessons) {
 		'以下为本会话已沉淀的最近教训（来源 `.lessons/learned.md`），执行前对照检查是否涉及已知坑：',
 		'',
 		...lessons
-	].join('\n\n')
+	].join('\n')
 }
 
 function apply(ctx) {
