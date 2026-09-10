@@ -4,11 +4,12 @@
  * A clock-style gauge mounted in the conversation header's utilities slot
  * (right side of the session header). It reads the host-computed "tokenUsage"
  * session projection (uncachedInputTokens / cacheReadTokens / outputTokens)
- * and prices it with DeepSeek V4 Flash rates (CNY per 1M tokens, effective
- * 2026-08-17): uncached input ¥1.5, cached input ¥0.05, output ¥4.5, and a
- * ×2 peak-hour multiplier (09:00–12:00 / 14:00–18:00 Beijing). The gauge is
- * event-driven: every provider usage frame re-renders it, so it stays live
- * with no polling.
+ * and prices it with DeepSeek **V4.1-Flash** rates (CNY per 1M tokens,
+ * effective 2026-09-03): uncached input ¥1, cached input ¥0.02, output ¥4,
+ * and a ×2 peak-hour multiplier (Mon–Fri 09:00–12:00 / 14:00–18:00 Beijing;
+ * weekends/idle时段 ×1). Sources: api-docs.deepseek.com/zh-cn/quick_start/pricing
+ * The gauge is event-driven: every provider usage frame re-renders it, so it
+ * stays live with no polling.
  */
 window.__ModuleLoader__.load({
 	id: "@dsh-local/cost-gauge",
@@ -17,12 +18,12 @@ window.__ModuleLoader__.load({
 		var exports = module.exports;
 		let { jsx: _jsx, jsxs: _jsxs } = require("react/jsx-runtime");
 
-		// ── Pricing (CNY per 1M tokens; edit when DeepSeek changes rates) ──
+		// ── Pricing (CNY per 1M tokens; DeepSeek-V4.1-Flash, 2026-09-03 官方价) ──
 		var PRICE = {
-			inputUncached: 1.5, // 输入·缓存未命中
-			inputCached: 0.05, // 输入·缓存命中
-			output: 4.5, // 输出
-			peakMultiplier: 2 // 高峰时段（北京时间 09-12 / 14-18）×2
+			inputUncached: 1, // 输入·缓存未命中（空闲时段；高峰 2）
+			inputCached: 0.02, // 输入·缓存命中（空闲时段；高峰 0.04）
+			output: 4, // 输出（空闲时段；高峰 8）
+			peakMultiplier: 2 // 高峰时段（周一至周五 09-12 / 14-18）×2
 		};
 
 		function beijingHour() {
@@ -34,8 +35,8 @@ window.__ModuleLoader__.load({
 		}
 
 		function isPeak() {
-			// 政策（2026-08-23 起）：周末（周六/周日）全天统一按低谷价，
-			// 不区分峰谷；工作日高峰 09-12 / 14-18（北京时间）价格 ×2。
+			// 官方政策（V4.1-Flash 定价页）：高峰 = 周一至周五 09-12 / 14-18（北京时间）×2，
+			// 其余时段（含周末全天、工作日夜间）为空闲时段 ×1。
 			try {
 				var wd = new Intl.DateTimeFormat("en-US", { weekday: "short", timeZone: "Asia/Shanghai" }).format(new Date());
 				if (wd === "Sat" || wd === "Sun") return false;
