@@ -139,6 +139,9 @@ function apply(ctx) {
 				}
 			}
 		}, 'loop-learn: error capture and lesson injection')
+		if (ctx.logger && typeof ctx.logger.info === 'function') {
+			ctx.logger.info('loop-learn: apply ok (error capture + lesson context registered)')
+		}
 	} catch (e) {
 		if (ctx.logger && typeof ctx.logger.warn === 'function') {
 			ctx.logger.warn('loop-learn: apply failed: ' + (e && e.message ? e.message : String(e)))
