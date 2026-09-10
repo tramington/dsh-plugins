@@ -31,6 +31,22 @@ const INJECT_LIMIT = 5
 const INJECT_TEXT_LIMIT = 6000
 /** 教训文件缓存（避免每步重读磁盘）。 */
 const cache = { mtimeMs: 0, text: '' }
+/** 诊断日志去重（每个 key 最多打 2 次，避免每步刷屏）。 */
+const diagCount = new Map()
+
+/** 一次性诊断日志（定位注入失效；每 key 上限 2 次）。 */
+function diag(ctx, key, detail) {
+	try {
+		const n = diagCount.get(key) || 0
+		if (n >= 2) return
+		diagCount.set(key, n + 1)
+		if (ctx.logger && typeof ctx.logger.info === 'function') {
+			ctx.logger.info(`loop-learn diag: ${key} :: ${JSON.stringify(detail).slice(0, 400)}`)
+		}
+	} catch {
+		/* 静默 */
+	}
+}
 
 function renderLessons(lessons) {
 	return [
@@ -82,23 +98,32 @@ function apply(ctx) {
 				text: (assemblyCtx) => {
 					try {
 						const agent = assemblyCtx && assemblyCtx.agent
-						if (!agent) return ''
-						const cwd = agent.session.header.cwd
-						if (typeof cwd !== 'string' || cwd.length === 0) return ''
+						if (!agent) {
+							diag(ctx, 'context: no agent in assemblyCtx', assemblyCtx)
+							return ''
+						}
+						const cwd = agent.session && agent.session.header && agent.session.header.cwd
+						if (typeof cwd !== 'string' || cwd.length === 0) {
+							diag(ctx, 'context: no cwd', { hasSession: !!agent.session, header: agent.session && agent.session.header })
+							return ''
+						}
 						const file = join(cwd, LESSONS_DIR, 'learned.md')
 						let mtimeMs = 0
 						try {
 							mtimeMs = requireStatMtime(file)
-						} catch {
+						} catch (e) {
+							diag(ctx, 'context: learned.md stat failed', { file, err: e && e.message })
 							return ''
 						}
 						if (mtimeMs !== cache.mtimeMs) {
 							cache.mtimeMs = mtimeMs
 							const lessons = readLatestLessons(join(cwd, LESSONS_DIR), INJECT_LIMIT)
 							cache.text = lessons.length > 0 ? renderLessons(lessons) : ''
+							diag(ctx, 'context: lessons reloaded', { file, count: lessons.length, textLen: cache.text.length })
 						}
 						return cache.text.length <= INJECT_TEXT_LIMIT ? cache.text : cache.text.slice(0, INJECT_TEXT_LIMIT) + '\n…（截断）'
-					} catch {
+					} catch (e) {
+						diag(ctx, 'context: unexpected error', { err: e && e.message })
 						return ''
 					}
 				}
