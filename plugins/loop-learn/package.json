@@ -1,7 +1,7 @@
 {
   "name": "@dsh-local/loop-learn",
-  "version": "0.1.0",
-  "description": "P3 loop 教训闭环（node 半）：tool/result 失败自动落盘 .lessons/errors/ + 动态 context 注入 .lessons/learned.md 最近教训（agent 每轮整理，loop-rules 0.1.6 规则配套）",
+  "version": "0.1.1",
+  "description": "P3 loop 教训闭环（node 半）：tool/result 失败自动落盘 .lessons/errors/ + 动态 context 注入 .lessons/learned.md 最近教训（agent 每轮整理，loop-rules 0.1.6 规则配套）。0.1.1：错误文本提取改为形状无关（修 0.1.7 下 read 类失败落盘空 text）+ 无 meta 时不留悬空分隔符",
   "private": true,
   "type": "module",
   "main": "lib/index.js",

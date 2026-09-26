@@ -36,6 +36,39 @@ console.log('1) errorEntry / extractText')
 	check('extractText 空 → 空串', extractText({}) === '')
 }
 
+console.log('1b) 形状无关提取（0.1.7 实测形状 / R1.3 回归）')
+{
+	// 0.1.7 read 类失败：text 直接挂在 content[] 上（无 tool-result 包裹）
+	const flat = {
+		data: {
+			error: { name: 'FsError', code: 'FS_NOT_FOUND' },
+			message: {
+				source: { kind: 'tool', callId: 'c2' },
+				content: [{ type: 'text', text: 'Error: cannot read "/tmp/nope.md": not found' }]
+			}
+		}
+	}
+	const flatEntry = errorEntry(flat, new Date('2026-09-26T12:00:00Z'))
+	check('扁平 content[].text 能取到', flatEntry.includes('cannot read "/tmp/nope.md"'))
+	check('0.1.7 无 meta 时不留悬空分隔符', !flatEntry.split('\n')[0].endsWith('·'))
+
+	// 错误对象自带 message 的兜底
+	const errOnly = { data: { error: { name: 'XError', code: 'X', message: 'boom from error object' }, message: {} } }
+	check('error.message 兜底', errorEntry(errOnly).includes('boom from error object'))
+
+	// 完全没有文本时给占位（不再落盘空 text）
+	const noText = { data: { error: { name: 'MysteryError' }, message: { content: [] } } }
+	check('无文本 → 占位符', errorEntry(noText).includes('(事件未携带错误文本)'))
+	check('无文本也不抛', typeof errorEntry(noText) === 'string')
+
+	// 深层嵌套（旧形状）仍可提取 + 循环引用不挂
+	const cyc = { content: [{ type: 'tool-result', content: [{ type: 'text', text: 'deep nested error' }] }] }
+	cyc.self = cyc
+	check('深层嵌套可提取', extractText(cyc) === 'deep nested error')
+	check('循环引用不抛', extractText(cyc.self) === 'deep nested error')
+	check('null 输入 → 空串', extractText(null) === '')
+}
+
 console.log('2) appendError / listErrorFiles / readLatestLessons')
 {
 	const root = mkdtempSync(join(tmpdir(), 'loop-learn-test-'))

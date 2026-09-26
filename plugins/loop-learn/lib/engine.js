@@ -16,31 +16,57 @@ export function errorEntry(event, at = new Date()) {
 	const data = event && event.data
 	if (!data || !data.error) return null
 	const msg = data.message
-	const text = extractText(msg)
+	let text = extractText(msg)
+	if (!text) text = extractText(data.error) // 兜底：错误对象自带 message
+	if (!text) text = '(事件未携带错误文本)'
 	const name = data.error.name || 'UnknownError'
 	const code = data.error.code !== void 0 ? ` (${data.error.code})` : ''
-	const tool = (msg && msg.source && msg.source.kind) || 'tool'
-	const toolName = tool === 'tool' ? (data.meta && data.meta.name) || '' : tool
+	const kind = (msg && msg.source && msg.source.kind) || 'tool'
+	// 0.1.7 起 tool/result 事件不再带 data.meta（实测为 null）→ 工具名为空时不留悬空分隔符
+	const toolName = (data.meta && data.meta.name) || (kind !== 'tool' ? kind : '')
+	const head = `- ${at.toISOString()} · **${name}${code}**`
 	return [
-		`- ${at.toISOString()} · **${name}${code}** · ${toolName}`,
+		toolName ? `${head} · ${toolName}` : head,
 		`  text: ${text.length > 400 ? text.slice(0, 400) + '…' : text}`
 	].join('\n')
 }
 
-/** 提取 message 里第一个 text 块的内容（失败样本实证：错误文本在 content[].content[].text）。 */
-export function extractText(msg) {
-	try {
-		for (const block of msg.content || []) {
-			if (block.type === 'tool-result' && Array.isArray(block.content)) {
-				for (const c of block.content) {
-					if (c.type === 'text' && typeof c.text === 'string') return c.text.replace(/\s+/g, ' ').trim()
-				}
+/**
+ * 提取错误文本：对消息结构做**形状无关**的递归查找。
+ *
+ * 背景（2026-09-26 实测）：0.1.5 的 edit 类失败文本在 content[].content[].text，
+ * 而 0.1.7 的 read 类失败在 content[] 直接挂 text——按固定层级取会漏，落盘成空 text。
+ * 策略：优先取第一个非空 text 字段，按 content/message/result/error/... 递归兜底；
+ * 找不到返回空串（调用方再兜底），全程不抛。
+ */
+export function extractText(input) {
+	const seen = new Set()
+	const walk = (node, depth) => {
+		if (node == null || depth > 6) return ''
+		if (typeof node === 'string') return node.trim() !== '' ? node : ''
+		if (Array.isArray(node)) {
+			for (const item of node) {
+				const r = walk(item, depth + 1)
+				if (r) return r
+			}
+			return ''
+		}
+		if (typeof node !== 'object' || seen.has(node)) return ''
+		seen.add(node)
+		if (typeof node.text === 'string' && node.text.trim() !== '') return node.text
+		for (const key of ['content', 'message', 'result', 'error', 'data', 'body', 'detail']) {
+			if (key in node) {
+				const r = walk(node[key], depth + 1)
+				if (r) return r
 			}
 		}
-	} catch {
-		/* 静默 */
+		return ''
 	}
-	return ''
+	try {
+		return walk(input, 0).replace(/\s+/g, ' ').trim()
+	} catch {
+		return ''
+	}
 }
 
 /** 按天追加错误记录到 <dir>/errors-<YYYY-MM-DD>.md。失败返回 false。 */
